@@ -17,7 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write  # 需要 write 以支援 WRITE MODE git push；由 OWNER_LINE_USER_ID 把關
+      # contents: write is required for WRITE MODE (git push wiki changes).
+      # If you don't use WRITE MODE, change this to "contents: read" for least privilege.
+      # To further reduce attack surface, split into two jobs (query=read / write=write).
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -147,11 +150,6 @@ jobs:
 
           CLAUDE_EXIT=$?
 
-          echo "=== Claude raw output ==="
-          cat /tmp/claude_output.json || true
-          echo "=== Claude stderr ==="
-          cat /tmp/claude_error.txt || true
-
           if [ $CLAUDE_EXIT -eq 0 ]; then
             RESULT=$(jq -r '.result // .content // empty' /tmp/claude_output.json 2>/dev/null)
             if [ -z "$RESULT" ] || [ "$RESULT" = "null" ]; then
@@ -197,6 +195,5 @@ jobs:
             "${N8N_WEBHOOK_URL}")
 
           echo "n8n HTTP: ${HTTP_CODE}"
-          cat /tmp/n8n_resp.txt
 
           [[ "$HTTP_CODE" != 2* ]] && echo "::warning::n8n returned non-2xx: ${HTTP_CODE}"
