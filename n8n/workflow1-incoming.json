@@ -77,6 +77,36 @@
           },
           "conditions": [
             {
+              "id": "text-type-check",
+              "leftValue": "={{ $json.body.events[0].message.type }}",
+              "rightValue": "text",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1760, 1360],
+      "id": "b3c4d5e6-f7a8-9012-cdef-123456789012",
+      "name": "If - Text Message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
               "id": "34226e81-21af-482d-9189-14381c62135b",
               "leftValue": "={{ $json.body.events[0].message.text }}",
               "rightValue": "@YOUR_BOT_NAME",
@@ -256,6 +286,17 @@
       ]
     },
     "Verify LINE Signature": {
+      "main": [
+        [
+          {
+            "node": "If - Text Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Text Message": {
       "main": [
         [
           {

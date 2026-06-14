@@ -15,7 +15,7 @@ compiled: 2025-01-01
 
 | Contact | Phone | Note |
 |------|------|------|
-| (Example: electrician/plumber) | 0912-345-678 | — |
+| (Example: electrician/plumber) | (Example phone number) | — |
 
 ## Appliance Settings
 

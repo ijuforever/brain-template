@@ -109,12 +109,6 @@ Set credentials in n8n. For each Header Auth credential, the exact values are:
 
 ### 6) Test
 
-Local test (requires Claude Code CLI):
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-USER_INPUT="What is our WiFi password?" ./scripts/agent.sh
-```
-
 LINE test: send `@your-bot-name What is our WiFi password?` in your group.
 
 ---
