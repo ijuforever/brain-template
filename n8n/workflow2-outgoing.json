@@ -5,13 +5,19 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "github-callback",
+        "authentication": "headerAuth",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [-576, 112],
       "id": "8c4da11f-7be8-49ad-bce6-34dff2bf3d33",
-      "name": "Webhook"
+      "name": "Webhook",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "Brain Webhook Secret"
+        }
+      }
     },
     {
       "parameters": {

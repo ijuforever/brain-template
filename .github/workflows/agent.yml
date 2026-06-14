@@ -45,7 +45,7 @@ jobs:
           fi
 
           # Write mode: owner only, triggered by keyword
-          if [ "${USER_ID}" = "${OWNER_LINE_USER_ID}" ] && grep -qiE "幫我記|記到wiki|記入wiki|記一下" /tmp/user_input.txt; then
+          if [ "${USER_ID}" = "${OWNER_LINE_USER_ID}" ] && grep -qiE "save to wiki|remember this|note this" /tmp/user_input.txt; then
             echo "mode=write" >> "$GITHUB_OUTPUT"
           else
             echo "mode=query" >> "$GITHUB_OUTPUT"
@@ -98,13 +98,13 @@ jobs:
             WIKI_CONTENT=$(load_dir "wiki/family/")
           fi
 
-          PROMPT="你是家族智慧助手。以下是知識庫內容，請根據這些資料加上自身知識回答問題。用繁體中文簡潔回答，必要時可到150字，不要為了湊字數而延伸。不要使用 markdown 格式（不要用 *、**、#、- 等符號），純文字即可。
+          PROMPT="You are a family assistant. Use the knowledge base below as the primary source and answer the user's question clearly and concisely in English. Keep it plain text only (no markdown formatting).
 
-          === 知識庫 ===
+          === Knowledge Base ===
           ${WIKI_CONTENT}
-          === 結束 ===
+          === End ===
 
-          問題：$(cat /tmp/user_input.txt)"
+          Question: $(cat /tmp/user_input.txt)"
 
           claude -p "${PROMPT}" \
             --output-format json \
@@ -118,7 +118,7 @@ jobs:
             [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
-            RESULT="抱歉，處理您的問題時發生錯誤，請稍後再試。"
+            RESULT="Sorry, an error occurred while processing your request. Please try again later."
             echo "status=error" >> "$GITHUB_OUTPUT"
           fi
 
@@ -175,7 +175,7 @@ jobs:
             echo "   - General note: add \"- [${TODAY}] content\" under ## Notes (create if missing)"
             echo '   - Contact info: add a table row'
             echo "3. Update frontmatter compiled date to ${TODAY}"
-            echo '4. Reply in Traditional Chinese plain text: already recorded to <file>: <summary>'
+            echo '4. Reply in English plain text: already recorded to <file>: <summary>'
           } > /tmp/write_prompt.txt
 
           claude -p "$(cat /tmp/write_prompt.txt)" \
@@ -199,7 +199,7 @@ jobs:
             [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
-            RESULT="抱歉，寫入 wiki 時發生錯誤，請稍後再試。"
+            RESULT="Sorry, an error occurred while updating the wiki. Please try again later."
             echo "status=error" >> "$GITHUB_OUTPUT"
           fi
 
@@ -220,6 +220,7 @@ jobs:
       - name: Send result to n8n
         env:
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
           MODE: ${{ needs.detect.outputs.mode }}
           QUERY_RESULT: ${{ needs.query.outputs.result }}
           WRITE_RESULT: ${{ needs.write.outputs.result }}
@@ -228,10 +229,10 @@ jobs:
         run: |
           if [ "${MODE}" = "unauthorized" ]; then
             STATUS="error"
-            RESULT_TEXT="未授權的使用者。"
+            RESULT_TEXT="Unauthorized user."
           else
             STATUS="${QUERY_STATUS:-${WRITE_STATUS:-error}}"
-            RESULT_TEXT="${QUERY_RESULT:-${WRITE_RESULT:-系統發生未預期的錯誤，請稍後再試。}}"
+            RESULT_TEXT="${QUERY_RESULT:-${WRITE_RESULT:-An unexpected system error occurred. Please try again later.}}"
           fi
 
           PAYLOAD=$(jq -n \
@@ -247,6 +248,7 @@ jobs:
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST \
             -H "Content-Type: application/json" \
+            -H "X-Brain-Token: ${N8N_WEBHOOK_SECRET}" \
             -d "${PAYLOAD}" \
             "${N8N_WEBHOOK_URL}")
 

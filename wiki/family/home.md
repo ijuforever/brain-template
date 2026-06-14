@@ -1,27 +1,27 @@
 ---
-title: 家庭生活資訊
+title: Family Home Information
 compiled: 2025-01-01
 ---
 
-# 家庭生活資訊
+# Family Home Information
 
 ## WiFi
 
-| 地點 | 網路名稱 | 密碼 |
+| Location | Network Name | Password |
 |------|---------|------|
-| 家裡 | （填入你家的 WiFi 名稱） | （填入密碼） |
+| Home | (Fill in your home WiFi name) | (Fill in password) |
 
-## 常用聯絡
+## Frequent Contacts
 
-| 對象 | 電話 | 備註 |
+| Contact | Phone | Note |
 |------|------|------|
-| （例如：水電工） | 0912-345-678 | — |
+| (Example: electrician/plumber) | 0912-345-678 | — |
 
-## 家電設定
+## Appliance Settings
 
-### 電視 / 投影
-- （填入你家電視品牌）：（填入操作說明）
+### TV / Projector
+- (Fill in your device brand): (Fill in operation notes)
 
 ## Notes
 
-<!-- 用 LINE 說「幫我記 wiki [內容]」就可以自動新增到這裡 -->
+<!-- Use LINE command "save to wiki [content]" to append notes here automatically -->

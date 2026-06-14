@@ -1,29 +1,29 @@
-# My Brain — 個人知識庫
+# My Brain — Personal Knowledge Base
 
-> 這是我的私人知識庫，由 AI 助手自動查詢並回答問題。
+> This is a private knowledge base queried by the AI assistant.
 
 ---
 
-## 知識庫結構
+## Knowledge Base Structure
 
-| 資料夾 | 用途 |
-|--------|------|
-| `wiki/family/` | 家庭生活資訊（WiFi、聯絡人、保單等） |
+| Folder | Purpose |
+|--------|---------|
+| `wiki/family/` | Family information (WiFi, contacts, insurance, etc.) |
 
 ---
 
 ## All Pages
 
-| Page | 說明 | 最後更新 |
+| Page | Description | Last Updated |
 |------|------|---------|
-| [family/home.md](family/home.md) | 家庭生活資訊 | — |
+| [family/home.md](family/home.md) | Family home information | — |
 
 ---
 
 ## Setup Status
 
-- [ ] OWNER_ID 填入（GitHub Secrets）
-- [ ] N8N_WEBHOOK_URL 填入（GitHub Secrets）
-- [ ] ANTHROPIC_API_KEY 填入（GitHub Secrets）
-- [ ] LINE Bot 設定完成
-- [ ] n8n workflow 匯入
+- [ ] `OWNER_ID` set in GitHub Secrets
+- [ ] `N8N_WEBHOOK_URL` set in GitHub Secrets
+- [ ] `ANTHROPIC_API_KEY` set in GitHub Secrets
+- [ ] LINE bot configured
+- [ ] n8n workflow imported

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# scripts/agent.sh — 本地測試用
-# 用法：
+# scripts/agent.sh — local test helper
+# Usage:
 #   export ANTHROPIC_API_KEY="sk-ant-..."
-#   USER_INPUT="WiFi 密碼是什麼？" ./scripts/agent.sh
+#   USER_INPUT="What is our WiFi password?" ./scripts/agent.sh
 
 set -euo pipefail
 
@@ -10,7 +10,7 @@ USER_INPUT="${USER_INPUT:-}"
 
 if [ -z "$USER_INPUT" ]; then
   echo "Error: USER_INPUT is required" >&2
-  echo "Usage: USER_INPUT='你的問題' ./scripts/agent.sh" >&2
+  echo "Usage: USER_INPUT='your question' ./scripts/agent.sh" >&2
   exit 1
 fi
 
@@ -31,13 +31,13 @@ load_dir() {
 
 WIKI_CONTENT=$(load_dir "wiki/")
 
-PROMPT="你是家族智慧助手。以下是知識庫內容，請根據這些資料加上自身知識回答問題。用繁體中文簡潔回答，必要時可到150字。純文字，不使用 markdown 符號。
+PROMPT="You are a family assistant. Use the knowledge base below as your primary source, then answer the user clearly and briefly in English. Use plain text only (no markdown).
 
-=== 知識庫 ===
+=== Knowledge Base ===
 ${WIKI_CONTENT}
-=== 結束 ===
+=== End ===
 
-問題：${USER_INPUT}"
+Question: ${USER_INPUT}"
 
 claude -p "${PROMPT}" \
   --model claude-haiku-4-5-20251001 \

@@ -1,157 +1,165 @@
-# My Brain — LINE + Telegram 家族助手模板
+# My Brain — LINE + Telegram Family Assistant Template
 
-> 用 GitHub + Claude Code CLI 打造屬於你的私人 AI 助手，透過 LINE 或 Telegram 回答只有你才知道的問題。
-> 月費約 USD $10（n8n $5 + Anthropic API $5）
-
----
-
-## 這是什麼？
-
-這個 template 讓你可以：
-- 在 LINE 群組 @bot，直接查詢你的私人 wiki（WiFi 密碼、保單、行程…）
-- 用 Telegram 直接問 bot（更穩定，不會有 push 失敗問題）
-- 說「幫我記 wiki xxx」，自動寫入知識庫並 commit 到 GitHub
-- 把你的 Claude Code Skills 變成可以遠端用 LINE / Telegram 操控的能力
-
-**特點：**
-- 資料在自己的 GitHub private repo，不進任何第三方 AI 平台
-- Scale to zero，沒有查詢就不花錢
-- 完整 git history，知道誰改了什麼
-- 支援雙平台（LINE + Telegram），Telegram 作為 LINE Push 失敗時的備援
+> Build your private AI assistant with GitHub + Claude Code CLI, then use LINE or Telegram to ask questions only your family would know.
+> Estimated monthly cost: around USD $10 (n8n $5 + Anthropic API $5)
+> Chinese version: [README.zh.md](./README.zh.md)
+> Quickest setup: [GETTING_STARTED.md](./GETTING_STARTED.md) | 中文快速版: [GETTING_STARTED.zh.md](./GETTING_STARTED.zh.md)
 
 ---
 
-## 架構
+## What is this?
 
-```
-LINE 群組 / Telegram
-  ↓  @bot 問問題
-n8n（Railway 部署）
-  ↓  觸發 GitHub Actions
+This template lets you:
+- Query your private wiki in a LINE group by tagging your bot (WiFi password, insurance info, schedules, and more)
+- Ask the bot directly on Telegram (often more stable when LINE push delivery fails)
+- Say "save to wiki ..." to auto-write knowledge and commit to GitHub
+- Reuse your Claude Code Skills remotely through LINE / Telegram
+
+**Highlights:**
+- Data stays in your own private GitHub repo
+- Scale-to-zero architecture to reduce idle costs
+- Full git history for every knowledge edit
+- Dual platform support (LINE + Telegram), with Telegram as backup
+
+---
+
+## Architecture
+
+```text
+LINE Group / Telegram
+  ↓  Ask the bot
+n8n (deployed on Railway)
+  ↓  Trigger GitHub Actions
 GitHub Actions
-  ↓  執行 Claude Code CLI，讀取 wiki/
-Claude Code（Haiku 省錢版）
-  ↓  回傳答案
-n8n → LINE 推播
+  ↓  Run Claude Code CLI and read wiki/
+Claude Code (Haiku for lower cost)
+  ↓  Return answer
+n8n → Push back to LINE/Telegram
 ```
 
 ---
 
-## 快速開始
+## Quick Start
 
-### 1. Fork 這個 repo
+### 1) Fork this repo
 
-把這個 repo fork（或用 "Use this template"），設為 **Private**。
+Fork this repo (or use "Use this template") and set it to **Private**.
 
-### 2. 填入你的 wiki
+### 2) Fill your wiki content
 
-編輯 `wiki/family/home.md`，填入家庭資訊：
-- WiFi 密碼
-- 常用聯絡電話
-- 任何家人常問你的事
+Edit `wiki/family/home.md` with family info such as:
+- WiFi credentials
+- Common contact numbers
+- Any recurring family questions
 
-### 3. 設定 GitHub Secrets
+### 3) Configure GitHub Secrets
 
-到 repo `Settings > Secrets and variables > Actions`，新增：
+Go to `Settings > Secrets and variables > Actions` and add:
 
-| Secret 名稱 | 說明 | 哪裡找 |
-|------------|------|-------|
-| `ANTHROPIC_API_KEY` | Anthropic API 金鑰 | console.anthropic.com |
-| `OWNER_LINE_USER_ID` | 你的 LINE User ID | LINE Developers Console |
-| `N8N_WEBHOOK_URL` | n8n 接收 GitHub 回傳的 webhook URL | 見步驟 5 |
+| Secret | Description | Where to get it |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic API key | console.anthropic.com |
+| `OWNER_LINE_USER_ID` | Your LINE user ID | LINE Developers Console |
+| `ALLOWED_LINE_USER_IDS` | Comma-separated LINE user IDs allowed to query | Collect from n8n logs |
+| `OWNER_TELEGRAM_USER_ID` | Your Telegram user ID (optional) | Send `/start` to @userinfobot |
+| `N8N_WEBHOOK_URL` | n8n webhook URL for GitHub callback | Step 5 below |
+| `N8N_WEBHOOK_SECRET` | A random secret string to authenticate GitHub→n8n calls | Generate any random string |
 
-> **怎麼查你的 LINE User ID？**
-> LINE Developers Console > 選你的 channel > Webhook 設定 > 用 LINE 傳訊息後，在 n8n log 裡可以看到 `source.userId`
+> **GitHub PAT**: When creating the token for n8n to trigger GitHub Actions, use a **fine-grained personal access token** scoped to this repo only, with **Contents: Read and Write** permission. Avoid classic PATs with broad scopes.
 
-### 4. 申請 LINE Messaging API Bot
+> How to find your LINE user ID:
+> LINE Developers Console -> your channel -> webhook settings.  
+> Send a message, then read `source.userId` from your n8n logs.
 
-1. 到 [LINE Developers Console](https://developers.line.biz/)
-2. 新增 Provider → 新增 Messaging API channel
-3. 把 Bot 加入你的家族群組
-4. 記下 **Channel Access Token**（給 n8n 用）
+### 4) Create a LINE Messaging API bot
 
-### 5. 架設 n8n
+1. Go to [LINE Developers Console](https://developers.line.biz/)
+2. Create a Provider, then create a Messaging API channel
+3. Add your bot into your family group
+4. Copy the **Channel Access Token** (for n8n)
 
-推薦用 Railway 一鍵部署：
+### 5) Deploy n8n
+
+Recommended: deploy with Railway:
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/n8n)
 
-部署後在 n8n 建立兩個 workflow：
+Direct link: <https://railway.app/template/n8n>
 
-**Workflow A — 接收 LINE 訊息，觸發 GitHub Actions：**
-```
-LINE Webhook → 判斷是否 @bot → 觸發 GitHub repository_dispatch
-```
+Then create two workflows in n8n:
 
-**Workflow B — 接收 GitHub 回傳，推播 LINE：**
-```
-Webhook（接 GitHub Actions 回傳）→ LINE Push Message
+**Workflow A — Receive LINE/Telegram message and trigger GitHub Actions**
+```text
+Webhook/Trigger -> Check bot mention/whitelist -> GitHub repository_dispatch
 ```
 
-> 詳細 n8n workflow 設定請參考文章（連結待補）
+**Workflow B — Receive GitHub callback and send push message**
+```text
+Webhook (from GitHub Actions) -> Push message to LINE/Telegram
+```
 
-### 6. 測試
+> **Security**: Configure Workflow B's webhook to require the `X-Brain-Token` header matching your `N8N_WEBHOOK_SECRET`. In n8n, go to the Webhook node → Authentication → Header Auth, and set the header name to `X-Brain-Token`.  
+> LINE webhook signature (`X-Line-Signature`) verification is not natively supported by n8n's Webhook node. As a compensating control, restrict access by keeping your webhook URLs private and using the `ALLOWED_LINE_USER_IDS` whitelist in the workflow.
 
-本機測試（需要先安裝 Claude Code CLI）：
+### 6) Test
+
+Local test (requires Claude Code CLI):
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
-USER_INPUT="WiFi 密碼是什麼？" ./scripts/agent.sh
+USER_INPUT="What is our WiFi password?" ./scripts/agent.sh
 ```
 
-LINE 測試：在群組輸入 `@你的bot名稱 WiFi 密碼是什麼？`
+LINE test: send `@your-bot-name What is our WiFi password?` in your group.
 
 ---
 
-## 擴充知識庫
+## Expand the Knowledge Base
 
-新增更多 wiki 資料夾：
+Add more wiki folders as needed:
 
-```
+```text
 wiki/
 ├── family/
-│   └── home.md        ← 家庭資訊
-├── finance/           ← 財務（自行新增）
+│   └── home.md
+├── finance/
 │   └── index.md
-└── health/            ← 健康（自行新增）
+└── health/
     └── index.md
 ```
 
-在 `agent.yml` 的 keyword routing 區段加入對應的關鍵字即可。
+Then update keyword routing in `.github/workflows/agent.yml`.
 
 ---
 
-## 費用估算
+## Cost Estimate
 
-| 項目 | 費用 |
-|------|------|
-| n8n（Railway 最低方案） | USD $5/月 |
-| Anthropic API（Haiku，按量計費） | USD $3–8/月（視用量） |
-| GitHub Actions | 免費（private repo 2000 min/月） |
-| LINE Messaging API | 免費（500則/月內） |
-| **合計** | **約 USD $8–13/月** |
-
-> 單次查詢約 $0.07–$0.1（含 wiki context）
+| Item | Cost |
+|---|---|
+| n8n (Railway starter plan) | USD $5/month |
+| Anthropic API (Haiku, usage-based) | USD $3-8/month (depends on usage) |
+| GitHub Actions | Free (2,000 min/month on private repo) |
+| LINE Messaging API | Free (within monthly quota) |
+| **Total** | **About USD $8-13/month** |
 
 ---
 
 ## FAQ
 
-**Q: 回應好慢？**
-A: GitHub Actions cold start 約 30–60 秒，這是這個方案的主要缺點。如果無法接受，考慮用 OpenClaw 之類的 always-on 方案。
+**Q: Why is response time slow sometimes?**  
+A: GitHub Actions cold start is usually 30-60 seconds. If this is unacceptable, switch to an always-on setup.
 
-**Q: 可以用 OpenAI 代替 Claude 嗎？**
-A: 需要修改 `agent.yml` 裡的 CLI 指令，Claude Code CLI 目前只支援 Anthropic 模型。
+**Q: Can I use OpenAI instead of Claude?**  
+A: Yes, but you must update the CLI command and workflow logic in `.github/workflows/agent.yml`.
 
-**Q: 家人說的話會被看到嗎？**
-A: 問題內容會傳到 Anthropic API，但你的 wiki 資料只在自己的 GitHub repo，不進任何第三方平台。
+**Q: Is my family data exposed?**  
+A: Your wiki content is included in prompts sent to Anthropic's API for processing. Anthropic's API terms prohibit using API inputs for model training, but your data does leave your infrastructure. Keep sensitive information (passwords, ID numbers, financial details) out of the wiki, or accept this trade-off knowingly.
 
-**Q: 可以加更多家人嗎？**
-A: 可以在 `agent.yml` 的白名單區段加入更多 LINE User ID。
+**Q: Can I allow more family members?**  
+A: Yes. Add more user IDs to your whitelist (n8n + workflow secrets).
 
 ---
 
 ## Credit
 
-- 架構設計：[Iju](https://ijuhsu.com)
-- 原文：[聰明透透 — 我的 LINE 家族 AI 助手](待補)
-- 靈感來源：[Andrej Karpathy's personal wiki](https://github.com/karpathy/lexicap)
+- Architecture: [Iju](https://ijuhsu.com)
+- Inspiration: [Andrej Karpathy's personal wiki](https://github.com/karpathy/lexicap)

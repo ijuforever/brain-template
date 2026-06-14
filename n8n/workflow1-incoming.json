@@ -97,7 +97,7 @@
             {
               "id": "cal-intent-check",
               "leftValue": "={{ $json.body.events[0].message.text }}",
-              "rightValue": "wifi|保險|維修|健康|財務|投資|幫我記|記到wiki|記入wiki|記一下",
+              "rightValue": "wifi|insurance|repair|health|finance|investment|save to wiki|remember this|note this",
               "operator": {
                 "type": "string",
                 "operation": "regex"
