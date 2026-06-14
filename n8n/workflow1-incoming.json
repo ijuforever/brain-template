@@ -68,33 +68,13 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "text-type-check",
-              "leftValue": "={{ $json.body.events[0].message.type }}",
-              "rightValue": "text",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
+        "jsCode": "// Drop any LINE event that is not a text message (follow, join, leave, sticker, image, etc.)\n// Accessing .message before checking .type would throw for events with no message object.\nconst event = ($json.body.events || [])[0];\nif (!event || event.type !== 'message' || !event.message || event.message.type !== 'text') {\n  return [];\n}\nreturn $input.all();"
       },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [1760, 1360],
       "id": "b3c4d5e6-f7a8-9012-cdef-123456789012",
-      "name": "If - Text Message"
+      "name": "Filter LINE Text Events"
     },
     {
       "parameters": {
@@ -270,6 +250,16 @@
       "position": [2096, 1360],
       "id": "dcaa05d9-3228-4658-ac94-be2a4756b70d",
       "name": "Edit Fields - LINE"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Drop any Telegram update that has no text (stickers, photos, voice, etc.)\nconst msg = $input.item.json.message;\nif (!msg || !msg.text) {\n  return [];\n}\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1888, 1072],
+      "id": "c4d5e6f7-a8b9-0123-def0-234567890123",
+      "name": "Filter Telegram Text Events"
     }
   ],
   "pinData": {},
@@ -289,14 +279,14 @@
       "main": [
         [
           {
-            "node": "If - Text Message",
+            "node": "Filter LINE Text Events",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "If - Text Message": {
+    "Filter LINE Text Events": {
       "main": [
         [
           {
@@ -330,6 +320,17 @@
       ]
     },
     "If - Owner (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Filter Telegram Text Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Telegram Text Events": {
       "main": [
         [
           {

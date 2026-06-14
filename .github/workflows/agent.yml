@@ -101,7 +101,7 @@ jobs:
             WIKI_CONTENT=$(load_dir "wiki/family/")
           fi
 
-          PROMPT="You are a family assistant. Use the knowledge base below as the primary source and answer the user's question clearly and concisely in English. Keep it plain text only (no markdown formatting).
+          PROMPT="You are a family assistant. Use the knowledge base below as the primary source and answer the user's question clearly and concisely in the same language as the user's question. Keep it plain text only (no markdown formatting).
 
           === Knowledge Base ===
           ${WIKI_CONTENT}
@@ -178,7 +178,7 @@ jobs:
             echo "   - General note: add \"- [${TODAY}] content\" under ## Notes (create if missing)"
             echo '   - Contact info: add a table row'
             echo "3. Update frontmatter compiled date to ${TODAY}"
-            echo '4. Reply in English plain text: already recorded to <file>: <summary>'
+            echo '4. Reply in plain text in the same language as the user message: already recorded to <file>: <summary>'
           } > /tmp/write_prompt.txt
 
           claude -p "$(cat /tmp/write_prompt.txt)" \
