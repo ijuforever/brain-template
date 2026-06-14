@@ -13,15 +13,46 @@ env:
   CHAT_ID: ${{ github.event.client_payload.chat_id || '' }}
 
 jobs:
-  answer:
+  # ── 1. Detect mode (no repo access needed) ──────────────────────
+  detect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: none
+    outputs:
+      mode: ${{ steps.detect.outputs.mode }}
+    steps:
+      - name: Detect write vs query mode
+        id: detect
+        env:
+          OWNER_LINE_USER_ID: ${{ secrets.OWNER_LINE_USER_ID }}
+          OWNER_TELEGRAM_USER_ID: ${{ secrets.OWNER_TELEGRAM_USER_ID }}
+        run: |
+          printf '%s' "${USER_INPUT}" > /tmp/user_input.txt
+
+          # Telegram whitelist
+          if [ "${PLATFORM}" = "telegram" ] && [ "${USER_ID}" != "${OWNER_TELEGRAM_USER_ID}" ]; then
+            echo "mode=unauthorized" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Write mode: owner only, triggered by keyword
+          if [ "${USER_ID}" = "${OWNER_LINE_USER_ID}" ] && grep -qiE "幫我記|記到wiki|記入wiki|記一下" /tmp/user_input.txt; then
+            echo "mode=write" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=query" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── 2. Query (contents: read) ───────────────────────────────────
+  query:
+    needs: detect
+    if: needs.detect.outputs.mode == 'query'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      # contents: write is required for WRITE MODE (git push wiki changes).
-      # If you don't use WRITE MODE, change this to "contents: read" for least privilege.
-      # To further reduce attack surface, split into two jobs (query=read / write=write).
-      contents: write
-
+      contents: read
+    outputs:
+      result: ${{ steps.agent.outputs.result }}
+      status: ${{ steps.agent.outputs.status }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,92 +65,15 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Run Claude Agent
+      - name: Run Query Agent
         id: agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
           OWNER_LINE_USER_ID: ${{ secrets.OWNER_LINE_USER_ID }}
-          OWNER_TELEGRAM_USER_ID: ${{ secrets.OWNER_TELEGRAM_USER_ID }}
         run: |
-          echo "PLATFORM: ${PLATFORM}"
-
-          # ── Telegram 白名單保護 ────────────────────────────────────
-          if [ "${PLATFORM}" = "telegram" ] && [ "${USER_ID}" != "${OWNER_TELEGRAM_USER_ID}" ]; then
-            echo "Unauthorized Telegram user: ${USER_ID}"
-            echo "status=error" >> "$GITHUB_OUTPUT"
-            {
-              echo 'result<<EOF_RESULT'
-              echo '未授權的使用者。'
-              echo 'EOF_RESULT'
-            } >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # 將 user input 寫入檔案，避免 shell injection
           printf '%s' "${USER_INPUT}" > /tmp/user_input.txt
 
-          OWNER_ID="${OWNER_LINE_USER_ID}"
-          Q=$(cat /tmp/user_input.txt)
-
-          # ── WRITE MODE（僅 owner 可觸發）──────────────────────────
-          if [ "${USER_ID}" = "${OWNER_ID}" ] && echo "$Q" | grep -qiE "幫我記|記到wiki|記入wiki|記一下"; then
-
-            TODAY=$(date +%Y-%m-%d)
-            {
-              echo '[WRITE MODE] EXECUTE immediately - do not describe what you will do.'
-              echo ''
-              echo "User message: $(cat /tmp/user_input.txt)"
-              echo ''
-              echo 'Route to the correct file based on content keywords:'
-              echo '  phone/contact/wifi/repair -> wiki/family/home.md'
-              echo '  unclear -> wiki/family/home.md'
-              echo ''
-              echo 'Steps:'
-              echo '1. Read the target file to understand its structure'
-              echo '2. Append using Edit tool, matching existing style:'
-              echo "   - General note: add \"- [${TODAY}] content\" under ## Notes (create if missing)"
-              echo '   - Contact info: add a table row'
-              echo "3. Update frontmatter compiled date to ${TODAY}"
-              echo '4. Reply in Traditional Chinese plain text: already recorded to <file>: <summary>'
-            } > /tmp/write_prompt.txt
-
-            claude -p "$(cat /tmp/write_prompt.txt)" \
-              --output-format json \
-              --model "claude-sonnet-4-6" \
-              --max-turns 8 \
-              > /tmp/claude_output.json 2>/tmp/claude_error.txt
-
-            CLAUDE_EXIT=$?
-
-            git config user.email "actions@github.com"
-            git config user.name "My Brain Bot"
-            if [ -n "$(git status --porcelain wiki/)" ]; then
-              git add wiki/
-              COMMIT_MSG=$(echo "$Q" | head -c 60)
-              git commit -m "wiki: [LINE] ${COMMIT_MSG}"
-              git push
-            fi
-
-            if [ $CLAUDE_EXIT -eq 0 ]; then
-              RESULT=$(jq -r '.result // .content // empty' /tmp/claude_output.json 2>/dev/null)
-              [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
-              echo "status=success" >> "$GITHUB_OUTPUT"
-            else
-              RESULT="抱歉，寫入 wiki 時發生錯誤，請稍後再試。"
-              echo "status=error" >> "$GITHUB_OUTPUT"
-            fi
-
-            {
-              echo 'result<<EOF_RESULT'
-              printf '%s\n' "${RESULT}"
-              echo 'EOF_RESULT'
-            } >> "$GITHUB_OUTPUT"
-
-            exit 0
-          fi
-
-          # ── QUERY MODE ──────────────────────────────────────────
           load_dir() {
             find "$1" -name "*.md" 2>/dev/null | while read f; do
               echo "### $f"
@@ -128,8 +82,8 @@ jobs:
             done
           }
 
-          # Owner 可以查詢全部 wiki；其他人只能查 family/
-          if [ "${USER_ID}" = "${OWNER_ID}" ]; then
+          # Owner sees all wiki; others only see wiki/family/
+          if [ "${USER_ID}" = "${OWNER_LINE_USER_ID}" ]; then
             WIKI_CONTENT=$(load_dir "wiki/")
           else
             WIKI_CONTENT=$(load_dir "wiki/family/")
@@ -152,9 +106,7 @@ jobs:
 
           if [ $CLAUDE_EXIT -eq 0 ]; then
             RESULT=$(jq -r '.result // .content // empty' /tmp/claude_output.json 2>/dev/null)
-            if [ -z "$RESULT" ] || [ "$RESULT" = "null" ]; then
-              RESULT=$(cat /tmp/claude_output.json)
-            fi
+            [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
             RESULT="抱歉，處理您的問題時發生錯誤，請稍後再試。"
@@ -167,16 +119,113 @@ jobs:
             echo 'EOF_RESULT'
           } >> "$GITHUB_OUTPUT"
 
+  # ── 3. Write (contents: write, owner only) ──────────────────────
+  write:
+    needs: detect
+    if: needs.detect.outputs.mode == 'write'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      result: ${{ steps.agent.outputs.result }}
+      status: ${{ steps.agent.outputs.status }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Write Agent
+        id: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+        run: |
+          printf '%s' "${USER_INPUT}" > /tmp/user_input.txt
+          TODAY=$(date +%Y-%m-%d)
+
+          {
+            echo '[WRITE MODE] EXECUTE immediately - do not describe what you will do.'
+            echo ''
+            echo "User message: $(cat /tmp/user_input.txt)"
+            echo ''
+            echo 'Route to the correct file based on content keywords:'
+            echo '  phone/contact/wifi/repair -> wiki/family/home.md'
+            echo '  unclear -> wiki/family/home.md'
+            echo ''
+            echo 'Steps:'
+            echo '1. Read the target file to understand its structure'
+            echo '2. Append using Edit tool, matching existing style:'
+            echo "   - General note: add \"- [${TODAY}] content\" under ## Notes (create if missing)"
+            echo '   - Contact info: add a table row'
+            echo "3. Update frontmatter compiled date to ${TODAY}"
+            echo '4. Reply in Traditional Chinese plain text: already recorded to <file>: <summary>'
+          } > /tmp/write_prompt.txt
+
+          claude -p "$(cat /tmp/write_prompt.txt)" \
+            --output-format json \
+            --model "claude-sonnet-4-6" \
+            --max-turns 8 \
+            > /tmp/claude_output.json 2>/tmp/claude_error.txt
+
+          CLAUDE_EXIT=$?
+
+          git config user.email "actions@github.com"
+          git config user.name "My Brain Bot"
+          if [ -n "$(git status --porcelain wiki/)" ]; then
+            git add wiki/
+            git commit -m "wiki: [LINE] $(head -c 60 /tmp/user_input.txt)"
+            git push
+          fi
+
+          if [ $CLAUDE_EXIT -eq 0 ]; then
+            RESULT=$(jq -r '.result // .content // empty' /tmp/claude_output.json 2>/dev/null)
+            [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
+            echo "status=success" >> "$GITHUB_OUTPUT"
+          else
+            RESULT="抱歉，寫入 wiki 時發生錯誤，請稍後再試。"
+            echo "status=error" >> "$GITHUB_OUTPUT"
+          fi
+
+          {
+            echo 'result<<EOF_RESULT'
+            printf '%s\n' "${RESULT}"
+            echo 'EOF_RESULT'
+          } >> "$GITHUB_OUTPUT"
+
+  # ── 4. Notify n8n (always runs) ─────────────────────────────────
+  notify:
+    needs: [detect, query, write]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: none
+    steps:
       - name: Send result to n8n
-        if: always()
         env:
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          MODE: ${{ needs.detect.outputs.mode }}
+          QUERY_RESULT: ${{ needs.query.outputs.result }}
+          WRITE_RESULT: ${{ needs.write.outputs.result }}
+          QUERY_STATUS: ${{ needs.query.outputs.status }}
+          WRITE_STATUS: ${{ needs.write.outputs.status }}
         run: |
-          STATUS="${{ steps.agent.outputs.status }}"
-          [ -z "$STATUS" ] && STATUS="error"
-
-          RESULT_TEXT="${{ steps.agent.outputs.result }}"
-          [ -z "$RESULT_TEXT" ] && RESULT_TEXT="系統發生未預期的錯誤，請稍後再試。"
+          if [ "${MODE}" = "unauthorized" ]; then
+            STATUS="error"
+            RESULT_TEXT="未授權的使用者。"
+          else
+            STATUS="${QUERY_STATUS}${WRITE_STATUS}"
+            [ -z "$STATUS" ] && STATUS="error"
+            RESULT_TEXT="${QUERY_RESULT}${WRITE_RESULT}"
+            [ -z "$RESULT_TEXT" ] && RESULT_TEXT="系統發生未預期的錯誤，請稍後再試。"
+          fi
 
           PAYLOAD=$(jq -n \
             --arg user_id "${USER_ID}" \
@@ -188,12 +237,11 @@ jobs:
             --arg status "${STATUS}" \
             '{user_id: $user_id, group_id: $group_id, source_type: $source_type, platform: $platform, chat_id: $chat_id, result: $result, status: $status}')
 
-          HTTP_CODE=$(curl -s -o /tmp/n8n_resp.txt -w "%{http_code}" \
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST \
             -H "Content-Type: application/json" \
             -d "${PAYLOAD}" \
             "${N8N_WEBHOOK_URL}")
 
           echo "n8n HTTP: ${HTTP_CODE}"
-
           [[ "$HTTP_CODE" != 2* ]] && echo "::warning::n8n returned non-2xx: ${HTTP_CODE}"
