@@ -1,0 +1,341 @@
+{
+  "name": "Brain Template - Incoming (LINE + Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "line-inbound",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [1504, 1360],
+      "id": "efce5cb8-58c5-4b9b-9520-6e938f6bfc07",
+      "name": "LINE Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/dispatches",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"event_type\": \"brain-trigger-agent\",\n    \"client_payload\": {\n      \"platform\": \"{{ $json.platform }}\",\n      \"user_input\": \"{{ $json.user_input }}\",\n      \"user_id\": \"{{ $json.user_id }}\",\n      \"group_id\": \"{{ $json.group_id }}\",\n      \"source_type\": \"{{ $json.source_type }}\",\n      \"chat_id\": \"{{ $json.chat_id }}\"\n    }\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2384, 1360],
+      "id": "6ddb8754-9be1-4148-a4d5-02159ef3a03a",
+      "name": "HTTP Request - GitHub Dispatch",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "GitHub PAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "34226e81-21af-482d-9189-14381c62135b",
+              "leftValue": "={{ $json.body.events[0].message.text }}",
+              "rightValue": "@YOUR_BOT_NAME",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "258c2f3b-e417-45a0-95d5-4ff59a8ef3c4",
+              "leftValue": "={{ [\"YOUR_LINE_USER_ID_1\", \"YOUR_LINE_USER_ID_2\"].includes($json.body.events[0].source.userId) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1680, 1360],
+      "id": "0dadc261-169a-4a71-a791-7b3b80acb34f",
+      "name": "If - Allowed Users (LINE)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cal-intent-check",
+              "leftValue": "={{ $json.body.events[0].message.text }}",
+              "rightValue": "wifi|保險|維修|健康|財務|投資|幫我記|記到wiki|記入wiki|記一下",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1888, 1360],
+      "id": "fedce6cf-e5e3-452f-b1df-75d1c8c307b8",
+      "name": "If - Knowledge Base Query"
+    },
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [1504, 1072],
+      "id": "fb3b5786-b84d-4956-8019-b43ee6cacd03",
+      "name": "Telegram Trigger",
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7afedb3-f165-4140-9e68-4e8f527a050a",
+              "name": "platform",
+              "value": "telegram",
+              "type": "string"
+            },
+            {
+              "id": "445d1e22-3bf7-4e1d-8bcb-a3f00a0dca3a",
+              "name": "user_input",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "ccd57036-d1e4-4d3b-b2a3-7f5ef3f3470a",
+              "name": "user_id",
+              "value": "={{ $json.message.from.id.toString() }}",
+              "type": "string"
+            },
+            {
+              "id": "7ed0b102-3a8b-4f1b-b55a-14c4dfe299bc",
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id.toString() }}",
+              "type": "string"
+            },
+            {
+              "id": "7dca73f3-3390-44e3-bf03-dfe6de5a836a",
+              "name": "source_type",
+              "value": "={{ $json.message.chat.type }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1888, 1072],
+      "id": "f10fcaee-1f77-40de-afc4-48e72eab4745",
+      "name": "Edit Fields - Telegram"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8e2b1b7e-fdd3-4066-9399-d6cf7412b79c",
+              "leftValue": "={{ $json.message.from.id.toString() }}",
+              "rightValue": "YOUR_TELEGRAM_USER_ID",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1680, 1072],
+      "id": "11592dd2-8067-4b1f-bfc0-7500674dbed0",
+      "name": "If - Owner (Telegram)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "eb05cde0-06a1-4bbd-9fcf-d1fe285f73ab",
+              "name": "platform",
+              "value": "line",
+              "type": "string"
+            },
+            {
+              "id": "66eef314-8ddd-4ea8-9522-d37113352610",
+              "name": "user_input",
+              "value": "={{ $('LINE Webhook').item.json.body.events[0].message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "47387f45-16ec-4448-b14d-4ff781362c9c",
+              "name": "user_id",
+              "value": "={{ $('LINE Webhook').item.json.body.events[0].source.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "1b9f4a34-0d92-45f4-9f5a-736dd4806e78",
+              "name": "group_id",
+              "value": "={{ $('LINE Webhook').item.json.body.events[0].source.groupId }}",
+              "type": "string"
+            },
+            {
+              "id": "3d145919-afc9-48d8-80d7-9de277a03555",
+              "name": "source_type",
+              "value": "={{ $('LINE Webhook').item.json.body.events[0].source.type }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2096, 1360],
+      "id": "dcaa05d9-3228-4658-ac94-be2a4756b70d",
+      "name": "Edit Fields - LINE"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "LINE Webhook": {
+      "main": [
+        [
+          {
+            "node": "If - Allowed Users (LINE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Allowed Users (LINE)": {
+      "main": [
+        [
+          {
+            "node": "If - Knowledge Base Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Knowledge Base Query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - LINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If - Owner (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Owner (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Telegram": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - GitHub Dispatch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - LINE": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - GitHub Dispatch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
