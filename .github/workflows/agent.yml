@@ -26,6 +26,7 @@ jobs:
         env:
           OWNER_LINE_USER_ID: ${{ secrets.OWNER_LINE_USER_ID }}
           OWNER_TELEGRAM_USER_ID: ${{ secrets.OWNER_TELEGRAM_USER_ID }}
+          ALLOWED_LINE_USER_IDS: ${{ secrets.ALLOWED_LINE_USER_IDS }}
         run: |
           printf '%s' "${USER_INPUT}" > /tmp/user_input.txt
 
@@ -33,6 +34,14 @@ jobs:
           if [ "${PLATFORM}" = "telegram" ] && [ "${USER_ID}" != "${OWNER_TELEGRAM_USER_ID}" ]; then
             echo "mode=unauthorized" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          # LINE whitelist (second layer; n8n is first)
+          if [ "${PLATFORM}" = "line" ]; then
+            if ! echo ",${ALLOWED_LINE_USER_IDS}," | grep -qF ",${USER_ID},"; then
+              echo "mode=unauthorized" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
           # Write mode: owner only, triggered by keyword
@@ -221,10 +230,8 @@ jobs:
             STATUS="error"
             RESULT_TEXT="未授權的使用者。"
           else
-            STATUS="${QUERY_STATUS}${WRITE_STATUS}"
-            [ -z "$STATUS" ] && STATUS="error"
-            RESULT_TEXT="${QUERY_RESULT}${WRITE_RESULT}"
-            [ -z "$RESULT_TEXT" ] && RESULT_TEXT="系統發生未預期的錯誤，請稍後再試。"
+            STATUS="${QUERY_STATUS:-${WRITE_STATUS:-error}}"
+            RESULT_TEXT="${QUERY_RESULT:-${WRITE_RESULT:-系統發生未預期的錯誤，請稍後再試。}}"
           fi
 
           PAYLOAD=$(jq -n \
