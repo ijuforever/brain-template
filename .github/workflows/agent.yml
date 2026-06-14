@@ -11,14 +11,13 @@ env:
   SOURCE_TYPE: ${{ github.event.client_payload.source_type }}
   PLATFORM: ${{ github.event.client_payload.platform || 'line' }}
   CHAT_ID: ${{ github.event.client_payload.chat_id || '' }}
-  MODEL: ${{ github.event.client_payload.model || 'claude-haiku-4-5-20251001' }}
 
 jobs:
   answer:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write
+      contents: write  # 需要 write 以支援 WRITE MODE git push；由 OWNER_LINE_USER_ID 把關
 
     steps:
       - name: Checkout repository
@@ -37,7 +36,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
-          OWNER_ID: ${{ secrets.OWNER_LINE_USER_ID }}
+          OWNER_LINE_USER_ID: ${{ secrets.OWNER_LINE_USER_ID }}
           OWNER_TELEGRAM_USER_ID: ${{ secrets.OWNER_TELEGRAM_USER_ID }}
         run: |
           echo "PLATFORM: ${PLATFORM}"
@@ -54,8 +53,10 @@ jobs:
             exit 0
           fi
 
+          # 將 user input 寫入檔案，避免 shell injection
           printf '%s' "${USER_INPUT}" > /tmp/user_input.txt
 
+          OWNER_ID="${OWNER_LINE_USER_ID}"
           Q=$(cat /tmp/user_input.txt)
 
           # ── WRITE MODE（僅 owner 可觸發）──────────────────────────
@@ -102,7 +103,7 @@ jobs:
               [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
               echo "status=success" >> "$GITHUB_OUTPUT"
             else
-              RESULT="抱歉，寫入 wiki 時發生錯誤：$(cat /tmp/claude_error.txt 2>/dev/null)"
+              RESULT="抱歉，寫入 wiki 時發生錯誤，請稍後再試。"
               echo "status=error" >> "$GITHUB_OUTPUT"
             fi
 
@@ -141,17 +142,24 @@ jobs:
 
           claude -p "${PROMPT}" \
             --output-format json \
-            --model "${MODEL}" \
+            --model "claude-haiku-4-5-20251001" \
             > /tmp/claude_output.json 2>/tmp/claude_error.txt
 
           CLAUDE_EXIT=$?
 
+          echo "=== Claude raw output ==="
+          cat /tmp/claude_output.json || true
+          echo "=== Claude stderr ==="
+          cat /tmp/claude_error.txt || true
+
           if [ $CLAUDE_EXIT -eq 0 ]; then
             RESULT=$(jq -r '.result // .content // empty' /tmp/claude_output.json 2>/dev/null)
-            [ -z "$RESULT" ] || [ "$RESULT" = "null" ] && RESULT=$(cat /tmp/claude_output.json)
+            if [ -z "$RESULT" ] || [ "$RESULT" = "null" ]; then
+              RESULT=$(cat /tmp/claude_output.json)
+            fi
             echo "status=success" >> "$GITHUB_OUTPUT"
           else
-            RESULT="抱歉，處理您的問題時發生錯誤：$(cat /tmp/claude_error.txt 2>/dev/null)"
+            RESULT="抱歉，處理您的問題時發生錯誤，請稍後再試。"
             echo "status=error" >> "$GITHUB_OUTPUT"
           fi
 
