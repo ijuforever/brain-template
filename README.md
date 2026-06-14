@@ -92,7 +92,15 @@ Then import both workflows from the `n8n/` folder:
 
 **Workflow B (`workflow2-outgoing.json`)** — Receives GitHub callback and pushes reply to LINE/Telegram
 
-> **Security — Workflow B**: Go to its Webhook node → Authentication → Header Auth, set header name `X-Brain-Token`, value = your `N8N_WEBHOOK_SECRET`.  
+Set credentials in n8n. For each Header Auth credential, the exact values are:
+
+| Credential name | Header name | Header value |
+|---|---|---|
+| `GitHub PAT` | `Authorization` | `Bearer <your fine-grained PAT>` |
+| `LINE channel token` | `Authorization` | `Bearer <LINE channel access token>` |
+| `Brain Webhook Secret` | `X-Brain-Token` | `<your N8N_WEBHOOK_SECRET>` |
+
+> **Workflow B Webhook**: Authentication → Header Auth, name `X-Brain-Token`, value = your `N8N_WEBHOOK_SECRET`.  
 > **Required n8n env vars** (Railway: service → Variables tab):
 > - `LINE_CHANNEL_SECRET` — your LINE channel secret
 > - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — allows the signature verification Code node to run

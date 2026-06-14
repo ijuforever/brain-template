@@ -27,6 +27,16 @@
     },
     {
       "parameters": {
+        "jsCode": "const d = $input.item.json;\nreturn {\n  json: {\n    event_type: \"brain-trigger-agent\",\n    client_payload: {\n      platform: d.platform,\n      user_input: d.user_input,\n      user_id: d.user_id,\n      group_id: d.group_id || \"\",\n      source_type: d.source_type,\n      chat_id: d.chat_id || \"\"\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2240, 1216],
+      "id": "a2b3c4d5-e6f7-8901-bcde-f12345678901",
+      "name": "Format GitHub Dispatch"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.github.com/repos/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/dispatches",
         "authentication": "genericCredentialType",
@@ -42,12 +52,12 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n    \"event_type\": \"brain-trigger-agent\",\n    \"client_payload\": {\n      \"platform\": \"{{ $json.platform }}\",\n      \"user_input\": \"{{ $json.user_input }}\",\n      \"user_id\": \"{{ $json.user_id }}\",\n      \"group_id\": \"{{ $json.group_id }}\",\n      \"source_type\": \"{{ $json.source_type }}\",\n      \"chat_id\": \"{{ $json.chat_id }}\"\n    }\n  }",
+        "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2384, 1360],
+      "position": [2384, 1216],
       "id": "6ddb8754-9be1-4148-a4d5-02159ef3a03a",
       "name": "HTTP Request - GitHub Dispatch",
       "credentials": {
@@ -334,7 +344,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request - GitHub Dispatch",
+            "node": "Format GitHub Dispatch",
             "type": "main",
             "index": 0
           }
@@ -342,6 +352,17 @@
       ]
     },
     "Edit Fields - LINE": {
+      "main": [
+        [
+          {
+            "node": "Format GitHub Dispatch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format GitHub Dispatch": {
       "main": [
         [
           {
