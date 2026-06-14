@@ -5,13 +5,25 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "line-inbound",
-        "options": {}
+        "options": {
+          "rawBody": true
+        }
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [1504, 1360],
       "id": "efce5cb8-58c5-4b9b-9520-6e938f6bfc07",
       "name": "LINE Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verify LINE X-Line-Signature (HMAC-SHA256)\n// Requires LINE_CHANNEL_SECRET set as env var on your n8n instance.\n// If not set, verification is skipped with a warning (set it for production).\nconst crypto = require('crypto');\n\nconst channelSecret = process.env.LINE_CHANNEL_SECRET;\nconst signature = $json.headers['x-line-signature'];\nconst rawBody = $json.rawBody;\n\nif (!channelSecret) {\n  console.warn('[WARN] LINE_CHANNEL_SECRET not set — skipping signature verification');\n  return $input.all();\n}\n\nif (!signature) {\n  throw new Error('Missing X-Line-Signature header — possible forged request');\n}\n\nconst expected = crypto\n  .createHmac('sha256', channelSecret)\n  .update(Buffer.from(rawBody))\n  .digest('base64');\n\nif (expected !== signature) {\n  throw new Error('Invalid LINE signature — request rejected');\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1596, 1360],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Verify LINE Signature"
     },
     {
       "parameters": {
@@ -253,6 +265,17 @@
   "pinData": {},
   "connections": {
     "LINE Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify LINE Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify LINE Signature": {
       "main": [
         [
           {

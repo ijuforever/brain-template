@@ -22,8 +22,11 @@
 
 ## Setup Status
 
-- [ ] `OWNER_ID` set in GitHub Secrets
+- [ ] `OWNER_LINE_USER_ID` set in GitHub Secrets
+- [ ] `ALLOWED_LINE_USER_IDS` set in GitHub Secrets
 - [ ] `N8N_WEBHOOK_URL` set in GitHub Secrets
+- [ ] `N8N_WEBHOOK_SECRET` set in GitHub Secrets
 - [ ] `ANTHROPIC_API_KEY` set in GitHub Secrets
 - [ ] LINE bot configured
-- [ ] n8n workflow imported
+- [ ] n8n workflow1-incoming.json imported
+- [ ] n8n workflow2-outgoing.json imported (with Header Auth on webhook)
