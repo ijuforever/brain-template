@@ -58,11 +58,15 @@ U11111111111111111111111111111111,U22222222222222222222222222222222
 - `YOUR_LINE_USER_ID_1` / `YOUR_LINE_USER_ID_2`
 - `YOUR_TELEGRAM_USER_ID`
 
-在 n8n 設定 credentials：
+在 n8n 設定 credentials，各 Header Auth 的欄位值：
 
-- `GitHub PAT`（Header Auth，用來觸發 GitHub Actions）
-- `LINE channel token`（Header Auth，用來推播 LINE 訊息）
-- `Telegram account`（若有用 Telegram）
+| Credential 名稱 | Header name | Header value |
+|---|---|---|
+| `GitHub PAT` | `Authorization` | `Bearer <你的 fine-grained PAT>` |
+| `LINE channel token` | `Authorization` | `Bearer <LINE channel access token>` |
+| `Brain Webhook Secret` | `X-Brain-Token` | `<你的 N8N_WEBHOOK_SECRET>` |
+
+若有用 Telegram，另外加 `Telegram account` credential。
 
 **workflow2** 匯入後：
 

@@ -58,11 +58,15 @@ For **workflow1**, update these placeholders:
 - `YOUR_LINE_USER_ID_1` / `YOUR_LINE_USER_ID_2`
 - `YOUR_TELEGRAM_USER_ID`
 
-Set credentials in n8n:
+Set credentials in n8n. For each Header Auth credential, the exact values are:
 
-- `GitHub PAT` (Header Auth — used to trigger GitHub Actions)
-- `LINE channel token` (Header Auth — used to push LINE messages)
-- `Telegram account` (if using Telegram)
+| Credential name | Header name | Header value |
+|---|---|---|
+| `GitHub PAT` | `Authorization` | `Bearer <your fine-grained PAT>` |
+| `LINE channel token` | `Authorization` | `Bearer <LINE channel access token>` |
+| `Brain Webhook Secret` | `X-Brain-Token` | `<your N8N_WEBHOOK_SECRET>` |
+
+Add `Telegram account` credential if using Telegram.
 
 For **workflow2**, after import:
 

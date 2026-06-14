@@ -101,7 +101,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.item.json.body;\nconst to = data.source_type === 'group' ? data.group_id : data.user_id;\nreturn {\n  json: {\n    to: to,\n    text: (data.result || '').replace(/\\n/g, '\\\\n').replace(/\\r/g, '')\n  }\n};"
+        "jsCode": "const data = $input.item.json.body;\nconst to = data.source_type === 'group' ? data.group_id : data.user_id;\nconst text = (data.result || '').trim();\nreturn {\n  json: {\n    to: to,\n    messages: [{ type: 'text', text: text }]\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -121,7 +121,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"to\": \"{{ $json.to }}\",\n  \"messages\": [{\"type\": \"text\", \"text\": \"{{ $json.text }}\"}]\n}",
+        "jsonBody": "={{ JSON.stringify({ to: $json.to, messages: $json.messages }) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
