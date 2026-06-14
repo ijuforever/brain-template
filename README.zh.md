@@ -12,7 +12,7 @@
 這個 template 讓你可以：
 - 在 LINE 群組 @bot，直接查詢你的私人 wiki（WiFi 密碼、保單、行程…）
 - 用 Telegram 直接問 bot（更穩定，不會有 push 失敗問題）
-- 說「幫我記 wiki xxx」，自動寫入知識庫並 commit 到 GitHub
+- 說「幫我記 xxx」或「save to wiki xxx」，自動寫入知識庫並 commit 到 GitHub
 - 把你的 Claude Code Skills 變成可以遠端用 LINE / Telegram 操控的能力
 
 **特點：**
@@ -89,6 +89,14 @@ n8n → LINE / Telegram 推播
 **Workflow A（`workflow1-incoming.json`）** — 接收 LINE/Telegram 訊息，觸發 GitHub Actions
 
 **Workflow B（`workflow2-outgoing.json`）** — 接收 GitHub 回傳，推播到 LINE / Telegram
+
+在 n8n 設定 credentials，各 Header Auth 的欄位值：
+
+| Credential 名稱 | Header name | Header value |
+|---|---|---|
+| `GitHub PAT` | `Authorization` | `Bearer <你的 fine-grained PAT>` |
+| `LINE channel token` | `Authorization` | `Bearer <LINE channel access token>` |
+| `Brain Webhook Secret` | `X-Brain-Token` | `<你的 N8N_WEBHOOK_SECRET>` |
 
 > **必填 n8n 環境變數**（Railway：服務 → Variables tab）：
 > - `LINE_CHANNEL_SECRET` — 你的 LINE channel secret（必填；未設則所有 LINE 訊息被拒）

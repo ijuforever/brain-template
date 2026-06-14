@@ -47,7 +47,7 @@ jobs:
           # Write mode: owner only (LINE or Telegram), triggered by keyword
           OWNER_ID="${OWNER_LINE_USER_ID}"
           [ "${PLATFORM}" = "telegram" ] && OWNER_ID="${OWNER_TELEGRAM_USER_ID}"
-          if [ "${USER_ID}" = "${OWNER_ID}" ] && grep -qiE "save to wiki|remember this|note this" /tmp/user_input.txt; then
+          if [ "${USER_ID}" = "${OWNER_ID}" ] && grep -qiE "save to wiki|remember this|note this|幫我記|記 wiki|記住" /tmp/user_input.txt; then
             echo "mode=write" >> "$GITHUB_OUTPUT"
           else
             echo "mode=query" >> "$GITHUB_OUTPUT"

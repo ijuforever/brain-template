@@ -24,4 +24,4 @@ compiled: 2025-01-01
 
 ## Notes
 
-<!-- Use LINE command "save to wiki [content]" to append notes here automatically -->
+<!-- To append a note automatically, send your bot: "save to wiki [content]" (English) or "幫我記 [content]" (Chinese) -->
