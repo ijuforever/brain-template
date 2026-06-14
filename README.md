@@ -16,7 +16,7 @@ This template lets you:
 - Reuse your Claude Code Skills remotely through LINE / Telegram
 
 **Highlights:**
-- Data stays in your own private GitHub repo
+- Wiki files stay in your private repo; prompts are sent to Anthropic's API for processing
 - Scale-to-zero architecture to reduce idle costs
 - Full git history for every knowledge edit
 - Dual platform support (LINE + Telegram), with Telegram as backup
@@ -93,7 +93,11 @@ Then import both workflows from the `n8n/` folder:
 **Workflow B (`workflow2-outgoing.json`)** — Receives GitHub callback and pushes reply to LINE/Telegram
 
 > **Security — Workflow B**: Go to its Webhook node → Authentication → Header Auth, set header name `X-Brain-Token`, value = your `N8N_WEBHOOK_SECRET`.  
-> **Security — LINE signature**: Set `LINE_CHANNEL_SECRET` as an environment variable on your n8n instance (Railway: service → Variables tab). **Required before going live** — the workflow rejects requests with an invalid or missing signature when this variable is set.
+> **Required n8n env vars** (Railway: service → Variables tab):
+> - `LINE_CHANNEL_SECRET` — your LINE channel secret
+> - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — allows the signature verification Code node to run
+>
+> Without these, all incoming LINE messages will be rejected.
 
 ### 6) Test
 

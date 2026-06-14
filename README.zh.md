@@ -16,7 +16,7 @@
 - 把你的 Claude Code Skills 變成可以遠端用 LINE / Telegram 操控的能力
 
 **特點：**
-- 資料在自己的 GitHub private repo
+- Wiki 檔案存在自己的 GitHub private repo；prompt 會送到 Anthropic API 處理
 - Scale to zero，沒有查詢就不花錢
 - 完整 git history，知道誰改了什麼
 - 支援雙平台（LINE + Telegram），Telegram 作為 LINE Push 失敗時的備援
@@ -90,8 +90,11 @@ n8n → LINE / Telegram 推播
 
 **Workflow B（`workflow2-outgoing.json`）** — 接收 GitHub 回傳，推播到 LINE / Telegram
 
-> **安全設定**：匯入 Workflow B 後，到 Webhook 節點 → Authentication → Header Auth，設 header name 為 `X-Brain-Token`，value 為你的 `N8N_WEBHOOK_SECRET`。  
-> LINE 訊息驗簽（`X-Line-Signature`）：在 n8n 實例設定環境變數 `LINE_CHANNEL_SECRET`（Railway：Variables tab），workflow 會自動驗證。
+> **必填 n8n 環境變數**（Railway：服務 → Variables tab）：
+> - `LINE_CHANNEL_SECRET` — 你的 LINE channel secret（必填；未設則所有 LINE 訊息被拒）
+> - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — 讓驗簽 Code node 能使用 crypto 模組
+>
+> Workflow B：Webhook 節點 → Authentication → Header Auth，name `X-Brain-Token`，value = `N8N_WEBHOOK_SECRET`。
 
 ### 6. 測試
 

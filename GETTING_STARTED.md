@@ -70,7 +70,11 @@ For **workflow2**, after import:
 - Header name: `X-Brain-Token`
 - Header value: your `N8N_WEBHOOK_SECRET`
 
-> **LINE signature verification**: Set `LINE_CHANNEL_SECRET` as an environment variable on your n8n instance (Railway: service → Variables tab). The workflow verifies the `X-Line-Signature` header automatically when this variable is present.
+> **Required n8n environment variables** (Railway: service → Variables tab):
+> - `LINE_CHANNEL_SECRET` — your LINE channel secret (required for signature verification)
+> - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — allows the Code node to use Node's crypto module
+>
+> Without these, the Verify LINE Signature node will throw an error and block all incoming LINE messages.
 
 ## 4) Smoke Test (2 minutes)
 

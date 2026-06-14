@@ -70,7 +70,11 @@ U11111111111111111111111111111111,U22222222222222222222222222222222
 - Header name：`X-Brain-Token`
 - Header value：你的 `N8N_WEBHOOK_SECRET`
 
-> **LINE 訊息驗簽**：在 n8n 實例新增環境變數 `LINE_CHANNEL_SECRET`（Railway：服務 → Variables tab）。設好後 workflow 會自動驗證 `X-Line-Signature`，防止偽造請求。
+> **必填 n8n 環境變數**（Railway：服務 → Variables tab）：
+> - `LINE_CHANNEL_SECRET` — 你的 LINE channel secret（用於驗簽）
+> - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — 讓 Code node 能使用 Node 內建 crypto 模組
+>
+> 若未設定，Verify LINE Signature 節點會直接 throw error，所有 LINE 訊息都無法進入。
 
 ## 4) 冒煙測試（2 分鐘）
 
