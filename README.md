@@ -86,20 +86,14 @@ Recommended: deploy with Railway:
 
 Direct link: <https://railway.app/template/n8n>
 
-Then create two workflows in n8n:
+Then import both workflows from the `n8n/` folder:
 
-**Workflow A — Receive LINE/Telegram message and trigger GitHub Actions**
-```text
-Webhook/Trigger -> Check bot mention/whitelist -> GitHub repository_dispatch
-```
+**Workflow A (`workflow1-incoming.json`)** — Receives LINE/Telegram messages and triggers GitHub Actions
 
-**Workflow B — Receive GitHub callback and send push message**
-```text
-Webhook (from GitHub Actions) -> Push message to LINE/Telegram
-```
+**Workflow B (`workflow2-outgoing.json`)** — Receives GitHub callback and pushes reply to LINE/Telegram
 
-> **Security**: Configure Workflow B's webhook to require the `X-Brain-Token` header matching your `N8N_WEBHOOK_SECRET`. In n8n, go to the Webhook node → Authentication → Header Auth, and set the header name to `X-Brain-Token`.  
-> LINE webhook signature (`X-Line-Signature`) verification is not natively supported by n8n's Webhook node. As a compensating control, restrict access by keeping your webhook URLs private and using the `ALLOWED_LINE_USER_IDS` whitelist in the workflow.
+> **Security — Workflow B**: Go to its Webhook node → Authentication → Header Auth, set header name `X-Brain-Token`, value = your `N8N_WEBHOOK_SECRET`.  
+> **Security — LINE signature**: Set `LINE_CHANNEL_SECRET` as an environment variable on your n8n instance (Railway: service → Variables tab). **Required before going live** — the workflow rejects requests with an invalid or missing signature when this variable is set.
 
 ### 6) Test
 
