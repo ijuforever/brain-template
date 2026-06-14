@@ -251,4 +251,6 @@ jobs:
             "${N8N_WEBHOOK_URL}")
 
           echo "n8n HTTP: ${HTTP_CODE}"
-          [[ "$HTTP_CODE" != 2* ]] && echo "::warning::n8n returned non-2xx: ${HTTP_CODE}"
+          if [[ "$HTTP_CODE" != 2* ]]; then
+            echo "::warning::n8n returned non-2xx: ${HTTP_CODE}"
+          fi
