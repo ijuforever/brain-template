@@ -1,8 +1,6 @@
-# My Brain — Remote Claude Code via Telegram / LINE
+# My Brain — Trigger Any Claude Code Skill from Your Phone
 
-> A unified entry point to trigger any Claude Code Skill from your phone — no computer needed.
-> **Primary**: Telegram (personal remote control). **Optional**: LINE (family group queries).
-> Querying a private family wiki is the starter example. The real value is running any skill you have already built in Claude Code, straight from Telegram.
+> One message on Telegram. Any Claude Code skill runs on GitHub Actions. No laptop needed.
 > Estimated monthly cost: around USD $10 (n8n $5 + Anthropic API $5)
 > Chinese version: [README.zh.md](./README.zh.md)
 > Quickest setup: [GETTING_STARTED.md](./GETTING_STARTED.md) | 中文快速版: [GETTING_STARTED.zh.md](./GETTING_STARTED.zh.md)
@@ -11,17 +9,27 @@
 
 ## What is this?
 
-This template lets you:
-- **Trigger any Claude Code Skill remotely** via Telegram — update your resume, push to a repo, run a custom skill — without opening a laptop
-- Query your private wiki from Telegram or a LINE group (WiFi password, insurance info, schedules, and more)
-- Say "save to wiki ..." to auto-write knowledge and commit to GitHub
-- Add LINE as an optional channel for family group use
+A template that turns Telegram (or LINE) into a remote control for Claude Code.
 
-**Highlights:**
-- Your GitHub repo is your brain: wiki, skills, and memory — all version-controlled
-- Scale-to-zero architecture — no idle cost beyond the n8n instance
-- Full git history for every knowledge edit
-- Telegram as primary (simpler setup, no push limits); LINE as optional add-on for family groups
+```
+You send a message → n8n triggers GitHub Actions → Claude Code runs in your repo → reply comes back to your phone
+```
+
+Your GitHub repo is the brain: wiki content, Claude Code skills, memory — all version-controlled, all triggerable from your phone.
+
+**The starter example is a family wiki bot** (query WiFi passwords, save notes, answer household questions). But the real point is the architecture — once it is wired up, any skill you have built in Claude Code works the same way.
+
+---
+
+## Example Use Cases
+
+| What you send | What runs |
+|---|---|
+| "What's our WiFi password?" | Reads `wiki/family/home.md` |
+| "Save to wiki: plumber John 0912-345-678" | Writes to wiki, commits to GitHub |
+| "Update my resume with [new role]" | Runs your resume skill |
+| "What's my asset allocation this month?" | Reads your finance wiki |
+| Any skill trigger phrase you define | Runs that Claude Code skill |
 
 ---
 
@@ -39,6 +47,11 @@ Claude Code
 n8n → Push reply back to Telegram / LINE
 ```
 
+**Why this stack:**
+- Scale-to-zero — GitHub Actions only runs when triggered, no idle cost beyond the n8n instance
+- Full git history for every wiki edit or skill run
+- Telegram as primary (simple setup, no push limits); LINE optional for group use
+
 ---
 
 ## Quick Start
@@ -47,12 +60,11 @@ n8n → Push reply back to Telegram / LINE
 
 Fork this repo (or use "Use this template") and set it to **Private**.
 
-### 2) Fill your wiki content
+### 2) Add your content
 
-Edit `wiki/family/home.md` with family info such as:
-- WiFi credentials
-- Common contact numbers
-- Any recurring family questions
+The starter wiki is at `wiki/family/home.md`. Fill it in with anything you want the bot to know — or skip it and point the agent at your own skills instead.
+
+The agent reads everything under `wiki/` and can invoke any Claude Code skill defined in your repo.
 
 ### 3) Configure GitHub Secrets
 
@@ -61,17 +73,13 @@ Go to `Settings > Secrets and variables > Actions` and add:
 | Secret | Description | Where to get it |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Anthropic API key | console.anthropic.com |
-| `OWNER_LINE_USER_ID` | Your LINE user ID | LINE Developers Console |
+| `OWNER_TELEGRAM_USER_ID` | Your Telegram user ID | Send `/start` to @userinfobot |
+| `OWNER_LINE_USER_ID` | Your LINE user ID (if using LINE) | LINE Developers Console |
 | `ALLOWED_LINE_USER_IDS` | Comma-separated LINE user IDs allowed to query | Collect from n8n logs |
-| `OWNER_TELEGRAM_USER_ID` | Your Telegram user ID (optional) | Send `/start` to @userinfobot |
 | `N8N_WEBHOOK_URL` | n8n webhook URL for GitHub callback | Step 5 below |
 | `N8N_WEBHOOK_SECRET` | A random secret string to authenticate GitHub→n8n calls | Generate any random string |
 
-> **GitHub PAT**: When creating the token for n8n to trigger GitHub Actions, use a **fine-grained personal access token** scoped to this repo only, with **Contents: Read and Write** permission. Avoid classic PATs with broad scopes.
-
-> How to find your LINE user ID:
-> LINE Developers Console -> your channel -> webhook settings.  
-> Send a message, then read `source.userId` from your n8n logs.
+> **GitHub PAT**: Use a **fine-grained personal access token** scoped to this repo only, with **Contents: Read and Write** permission. Avoid classic PATs with broad scopes.
 
 ### 4) Set up your messaging bot
 
@@ -79,31 +87,31 @@ Go to `Settings > Secrets and variables > Actions` and add:
 
 1. Open Telegram and message [@BotFather](https://t.me/BotFather)
 2. Send `/newbot` and follow the prompts to get your **Bot Token**
-3. Send a message to your new bot, then use the Telegram API to find your **chat ID** (or send `/start` to [@userinfobot](https://t.me/userinfobot))
+3. Send `/start` to [@userinfobot](https://t.me/userinfobot) to find your **User ID**
 4. Add the Bot Token as a credential in n8n (`Telegram account`)
 
-**LINE (optional — for family group use)**
+**LINE (optional — for group use)**
 
 1. Go to [LINE Developers Console](https://developers.line.biz/)
 2. Create a Provider, then create a Messaging API channel
-3. Add your bot into your family group
+3. Add your bot into your group
 4. Copy the **Channel Access Token** (for n8n)
 
 ### 5) Deploy n8n
 
 Recommended: deploy with Railway:
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/n8n)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com?referralCode=WPRBMu)
 
-Direct link: <https://railway.app/template/n8n>
+Direct link: <https://railway.com?referralCode=WPRBMu>
 
 Then import both workflows from the `n8n/` folder:
 
-**Workflow A (`workflow1-incoming.json`)** — Receives LINE/Telegram messages and triggers GitHub Actions
+**Workflow A (`workflow1-incoming.json`)** — Receives Telegram/LINE messages and triggers GitHub Actions
 
-**Workflow B (`workflow2-outgoing.json`)** — Receives GitHub callback and pushes reply to LINE/Telegram
+**Workflow B (`workflow2-outgoing.json`)** — Receives GitHub callback and pushes reply to Telegram/LINE
 
-Set credentials in n8n. For each Header Auth credential, the exact values are:
+Set credentials in n8n:
 
 | Credential name | Header name | Header value |
 |---|---|---|
@@ -111,20 +119,74 @@ Set credentials in n8n. For each Header Auth credential, the exact values are:
 | `LINE channel token` | `Authorization` | `Bearer <LINE channel access token>` |
 | `Brain Webhook Secret` | `X-Brain-Token` | `<your N8N_WEBHOOK_SECRET>` |
 
-> **Workflow B Webhook**: Authentication → Header Auth, name `X-Brain-Token`, value = your `N8N_WEBHOOK_SECRET`.  
+> **Workflow B Webhook**: Authentication → Header Auth, name `X-Brain-Token`, value = your `N8N_WEBHOOK_SECRET`.
 > **Required n8n env vars** (Railway: service → Variables tab):
-> - `LINE_CHANNEL_SECRET` — your LINE channel secret
+> - `LINE_CHANNEL_SECRET` — your LINE channel secret (required if using LINE; missing = all LINE messages rejected)
 > - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — allows the signature verification Code node to run
->
-> Without these, all incoming LINE messages will be rejected.
 
-> **Note**: This template includes reference n8n workflows. Please import and test them in your own n8n instance before using with real family data.
+> **Note**: These are reference n8n workflows. Import and test in your own n8n instance before going live.
 
 ### 6) Test
 
-Telegram test: send any message directly to your bot.
+Telegram: send any message directly to your bot.
 
-LINE test (if configured): send `@your-bot-name What is our WiFi password?` in your group.
+LINE (if configured): send `@your-bot-name What is our WiFi password?` in your group.
+
+---
+
+## Extending with Your Own Skills
+
+The starter template covers wiki queries and wiki writes. To add your own skills:
+
+1. Add your skill files to the repo (Claude Code skills, prompts, or scripts)
+2. Update the keyword routing in `.github/workflows/agent.yml` to recognize your trigger phrases
+3. Update the agent prompt to describe what each skill does
+
+Example skill folders you might add:
+
+```text
+wiki/
+├── family/
+│   └── home.md
+├── finance/
+│   └── index.md
+└── health/
+    └── index.md
+skills/
+├── resume.md
+└── weekly-review.md
+```
+
+---
+
+## Cost Estimate
+
+| Item | Cost |
+|---|---|
+| n8n (Railway starter plan) | USD $5/month |
+| Anthropic API (Haiku, usage-based) | USD $3–8/month (depends on usage) |
+| GitHub Actions | Free (2,000 min/month on private repo) |
+| LINE Messaging API | Free (within monthly quota) |
+| **Total** | **About USD $8–13/month** |
+
+---
+
+## FAQ
+
+**Q: Why is response time slow?**
+A: GitHub Actions cold start is 30–60 seconds. This is a scale-to-zero trade-off. If latency is unacceptable, switch to an always-on setup.
+
+**Q: Is this overkill if I just want a wiki bot?**
+A: Yes — if all you need is wiki queries and you don't care about privacy, just wire n8n directly to an LLM API. This template makes sense when you also want to trigger Claude Code skills remotely.
+
+**Q: Is my data exposed?**
+A: Wiki content is included in prompts sent to Anthropic's API. Anthropic's terms prohibit using API inputs for model training, but your data does leave your own infrastructure. Avoid storing highly sensitive information (bank credentials, ID numbers, 2FA codes) in the wiki.
+
+**Q: Can I allow other users?**
+A: Yes. Add their Telegram user ID to `OWNER_TELEGRAM_USER_ID` logic, or add LINE user IDs to `ALLOWED_LINE_USER_IDS`.
+
+**Q: Can I use OpenAI instead of Claude?**
+A: Yes, but you need to update the CLI command and model logic in `.github/workflows/agent.yml`.
 
 ---
 
@@ -135,53 +197,7 @@ LINE test (if configured): send `@your-bot-name What is our WiFi password?` in y
 - Use a fine-grained GitHub PAT with the smallest required repo scope
 - Enable 2FA on GitHub, n8n, LINE, and Telegram accounts
 - Do not store bank passwords, national ID numbers, 2FA codes, or complete financial credentials in `wiki/`
-- Test the imported n8n workflows with sample data before adding real family data
-
----
-
-## Expand the Knowledge Base
-
-Add more wiki folders as needed:
-
-```text
-wiki/
-├── family/
-│   └── home.md
-├── finance/
-│   └── index.md
-└── health/
-    └── index.md
-```
-
-Then update keyword routing in `.github/workflows/agent.yml`.
-
----
-
-## Cost Estimate
-
-| Item | Cost |
-|---|---|
-| n8n (Railway starter plan) | USD $5/month |
-| Anthropic API (Haiku, usage-based) | USD $3-8/month (depends on usage) |
-| GitHub Actions | Free (2,000 min/month on private repo) |
-| LINE Messaging API | Free (within monthly quota) |
-| **Total** | **About USD $8-13/month** |
-
----
-
-## FAQ
-
-**Q: Why is response time slow sometimes?**  
-A: GitHub Actions cold start is usually 30-60 seconds. If this is unacceptable, switch to an always-on setup.
-
-**Q: Can I use OpenAI instead of Claude?**  
-A: Yes, but you must update the CLI command and workflow logic in `.github/workflows/agent.yml`.
-
-**Q: Is my family data exposed?**  
-A: Your wiki content is included in prompts sent to Anthropic's API for processing. Anthropic's API terms prohibit using API inputs for model training, but your data does leave your infrastructure. Keep sensitive information (passwords, ID numbers, financial details) out of the wiki, or accept this trade-off knowingly.
-
-**Q: Can I allow more family members?**  
-A: Yes. Add more user IDs to your whitelist (n8n + workflow secrets).
+- Test the imported n8n workflows with sample data before going live
 
 ---
 
