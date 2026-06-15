@@ -1,6 +1,7 @@
-# My Brain — LINE + Telegram 家族助手模板
+# My Brain — 用 LINE / Telegram 遠端觸發 Claude Code
 
-> 用 GitHub + Claude Code CLI 打造屬於你的私人 AI 助手，透過 LINE 或 Telegram 回答只有你才知道的問題。
+> 統一入口，讓你不開電腦就能從 LINE 或 Telegram 觸發任何 Claude Code Skill。
+> 查詢私人家族 wiki 只是最入門的範例，真正的價值是：你在 Claude Code 建好的任何 skill，都可以直接從手機操控。
 > 月費約 USD $10（n8n $5 + Anthropic API $5）
 > English version: [README.md](./README.md)
 > 最快上手（中文）：[GETTING_STARTED.zh.md](./GETTING_STARTED.zh.md) | English fast path: [GETTING_STARTED.md](./GETTING_STARTED.md)
@@ -10,16 +11,16 @@
 ## 這是什麼？
 
 這個 template 讓你可以：
+- **遠端觸發任何 Claude Code Skill**，不用開電腦——更新履歷、push repo、執行自訂 skill，從 LINE / Telegram 一句話搞定
 - 在 LINE 群組 @bot，直接查詢你的私人 wiki（WiFi 密碼、保單、行程…）
-- 用 Telegram 直接問 bot（更穩定，不會有 push 失敗問題）
 - 說「幫我記 xxx」或「save to wiki xxx」，自動寫入知識庫並 commit 到 GitHub
-- 把你的 Claude Code Skills 變成可以遠端用 LINE / Telegram 操控的能力
+- 用 Telegram 直接個人操控（比 LINE push 更穩定）
 
 **特點：**
-- Wiki 檔案存在自己的 GitHub private repo；prompt 會送到 Anthropic API 處理
-- Scale to zero，沒有查詢就不花錢
-- 完整 git history，知道誰改了什麼
-- 支援雙平台（LINE + Telegram），Telegram 作為 LINE Push 失敗時的備援
+- 你的 GitHub repo 就是你的大腦：wiki、skills、memory，全部有 version control
+- Scale to zero，沒有查詢就不花錢（除 n8n 月費外）
+- 完整 git history，知道誰改了什麼、什麼時候改的
+- 雙平台支援（LINE 給家族群組，Telegram 給個人操控）
 
 ---
 

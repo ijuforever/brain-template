@@ -1,6 +1,7 @@
-# My Brain — LINE + Telegram Family Assistant Template
+# My Brain — Remote Claude Code via LINE / Telegram
 
-> Build your private AI assistant with GitHub + Claude Code CLI, then use LINE or Telegram to ask questions only your family would know.
+> A unified entry point to trigger any Claude Code Skill from LINE or Telegram — no computer needed.
+> Querying a private family wiki is the starter example. The real value is running any skill you have already built in Claude Code, straight from your phone.
 > Estimated monthly cost: around USD $10 (n8n $5 + Anthropic API $5)
 > Chinese version: [README.zh.md](./README.zh.md)
 > Quickest setup: [GETTING_STARTED.md](./GETTING_STARTED.md) | 中文快速版: [GETTING_STARTED.zh.md](./GETTING_STARTED.zh.md)
@@ -10,16 +11,16 @@
 ## What is this?
 
 This template lets you:
-- Query your private wiki in a LINE group by tagging your bot (WiFi password, insurance info, schedules, and more)
-- Ask the bot directly on Telegram (often more stable when LINE push delivery fails)
+- **Trigger any Claude Code Skill remotely** from LINE or Telegram — update your resume, push to a repo, run a custom skill — without opening a laptop
+- Query your private wiki by tagging the bot in a LINE group (WiFi password, insurance info, schedules, and more)
 - Say "save to wiki ..." to auto-write knowledge and commit to GitHub
-- Reuse your Claude Code Skills remotely through LINE / Telegram
+- Use Telegram as a direct personal channel (more stable than LINE for solo use)
 
 **Highlights:**
-- Wiki files stay in your private repo; prompts are sent to Anthropic's API for processing
-- Scale-to-zero architecture to reduce idle costs
+- Your GitHub repo is your brain: wiki, skills, and memory — all version-controlled
+- Scale-to-zero architecture — no idle cost beyond the n8n instance
 - Full git history for every knowledge edit
-- Dual platform support (LINE + Telegram), with Telegram as backup
+- Dual platform support (LINE for family groups, Telegram for personal control)
 
 ---
 
