@@ -1,8 +1,6 @@
-# My Brain — 用 Telegram / LINE 遠端觸發 Claude Code
+# My Brain — 用手機觸發任何 Claude Code Skill
 
-> 統一入口，讓你不開電腦就能從手機觸發任何 Claude Code Skill。
-> **主要**：Telegram（個人遠端操控）。**選填**：LINE（家族群組查詢）。
-> 查詢私人家族 wiki 只是最入門的範例，真正的價值是：你在 Claude Code 建好的任何 skill，都可以直接從 Telegram 操控。
+> 傳一則 Telegram 訊息，任何 Claude Code skill 就在 GitHub Actions 上跑起來。不用開電腦。
 > 月費約 USD $10（n8n $5 + Anthropic API $5）
 > English version: [README.md](./README.md)
 > 最快上手（中文）：[GETTING_STARTED.zh.md](./GETTING_STARTED.zh.md) | English fast path: [GETTING_STARTED.md](./GETTING_STARTED.md)
@@ -11,17 +9,27 @@
 
 ## 這是什麼？
 
-這個 template 讓你可以：
-- **遠端觸發任何 Claude Code Skill**，不用開電腦——更新履歷、push repo、執行自訂 skill，從 Telegram 一句話搞定
-- 從 Telegram 或 LINE 群組查詢你的私人 wiki（WiFi 密碼、保單、行程…）
-- 說「幫我記 xxx」或「save to wiki xxx」，自動寫入知識庫並 commit 到 GitHub
-- 選擇性加入 LINE，供家族群組使用
+把 Telegram（或 LINE）變成 Claude Code 的遠端遙控器。
 
-**特點：**
-- 你的 GitHub repo 就是你的大腦：wiki、skills、memory，全部有 version control
-- Scale to zero，沒有查詢就不花錢（除 n8n 月費外）
-- 完整 git history，知道誰改了什麼、什麼時候改的
-- Telegram 為主（設定簡單、無推播限制）；LINE 為選填附加（適合家族群組）
+```
+你傳訊息 → n8n 觸發 GitHub Actions → Claude Code 在你的 repo 裡跑 → 結果推回手機
+```
+
+你的 GitHub repo 就是大腦：wiki 知識、Claude Code skills、memory——全部有 version control，全部可以從手機觸發。
+
+**這個 template 的 starter example 是家族 wiki 機器人**（查 WiFi 密碼、儲存筆記、回答家裡的問題）。但重點是這個架構——接好之後，你在 Claude Code 建的任何 skill 都能用同樣的方式觸發。
+
+---
+
+## 使用情境
+
+| 你說什麼 | 執行什麼 |
+|---|---|
+| 「WiFi 密碼是什麼？」 | 讀取 `wiki/family/home.md` |
+| 「幫我記：水電工 John 0912-345-678」 | 寫入 wiki，commit 到 GitHub |
+| 「幫我用這段更新履歷：[新職務]」 | 執行你的履歷 skill |
+| 「這個月資產配置怎麼樣？」 | 讀取你的財務 wiki |
+| 任何你定義的 skill 觸發詞 | 執行對應的 Claude Code skill |
 
 ---
 
@@ -39,6 +47,11 @@ Claude Code
 n8n → 推播回 Telegram / LINE
 ```
 
+**為什麼選這個架構：**
+- Scale to zero——GitHub Actions 只在被觸發時才跑，除 n8n 月費外沒有閒置成本
+- 完整 git history，每一次 wiki 編輯或 skill 執行都有記錄
+- Telegram 為主（設定簡單、無推播限制）；LINE 為選填，適合群組使用
+
 ---
 
 ## 快速開始
@@ -47,12 +60,11 @@ n8n → 推播回 Telegram / LINE
 
 把這個 repo fork（或用 "Use this template"），設為 **Private**。
 
-### 2. 填入你的 wiki
+### 2. 加入你的內容
 
-編輯 `wiki/family/home.md`，填入家庭資訊：
-- WiFi 密碼
-- 常用聯絡電話
-- 任何家人常問你的事
+Starter wiki 在 `wiki/family/home.md`，填入你想讓 bot 知道的事——或者跳過這步，直接指向你自己的 skills 也行。
+
+Agent 會讀取 `wiki/` 底下的所有內容，並可以呼叫 repo 裡定義的任何 Claude Code skill。
 
 ### 3. 設定 GitHub Secrets
 
@@ -61,15 +73,13 @@ n8n → 推播回 Telegram / LINE
 | Secret 名稱 | 說明 | 哪裡找 |
 |------------|------|-------|
 | `ANTHROPIC_API_KEY` | Anthropic API 金鑰 | console.anthropic.com |
-| `OWNER_LINE_USER_ID` | 你的 LINE User ID | LINE Developers Console |
+| `OWNER_TELEGRAM_USER_ID` | 你的 Telegram User ID | 傳 `/start` 給 @userinfobot |
+| `OWNER_LINE_USER_ID` | 你的 LINE User ID（若使用 LINE） | LINE Developers Console |
 | `ALLOWED_LINE_USER_IDS` | 允許查詢的 LINE User ID，逗號分隔 | 從 n8n log 收集 |
-| `OWNER_TELEGRAM_USER_ID` | 你的 Telegram User ID（選填） | 傳訊息給 @userinfobot |
 | `N8N_WEBHOOK_URL` | n8n 接收 GitHub 回傳的 webhook URL | 見步驟 5 |
 | `N8N_WEBHOOK_SECRET` | 驗證 GitHub→n8n 回傳的隨機密鑰 | 自行產生任意字串 |
 
 > **GitHub PAT**：建立 token 時請用 **fine-grained personal access token**，只限本 repo、只給 **Contents: Read and Write** 權限，避免使用 classic PAT 全權限。
-
-> 怎麼查 LINE User ID：發一則訊息，在 n8n execution log 裡看 `source.userId`。
 
 ### 4. 設定訊息平台 Bot
 
@@ -77,31 +87,31 @@ n8n → 推播回 Telegram / LINE
 
 1. 在 Telegram 找 [@BotFather](https://t.me/BotFather)
 2. 傳 `/newbot`，取得 **Bot Token**
-3. 傳訊息給你的 bot，再傳 `/start` 給 [@userinfobot](https://t.me/userinfobot) 取得你的 **User ID**
+3. 傳 `/start` 給 [@userinfobot](https://t.me/userinfobot) 取得你的 **User ID**
 4. 在 n8n 新增 `Telegram account` credential，填入 Bot Token
 
-**LINE（選填——供家族群組使用）**
+**LINE（選填——供群組使用）**
 
 1. 到 [LINE Developers Console](https://developers.line.biz/)
 2. 新增 Provider → 新增 Messaging API channel
-3. 把 Bot 加入你的家族群組
+3. 把 Bot 加入你的群組
 4. 記下 **Channel Access Token**（給 n8n 用）
 
 ### 5. 架設 n8n
 
 推薦用 Railway 一鍵部署：
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/n8n)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com?referralCode=WPRBMu)
 
-也可以直接用連結：<https://railway.app/template/n8n>
+也可以直接用連結：<https://railway.com?referralCode=WPRBMu>
 
 部署後匯入 `n8n/` 資料夾裡的兩個 workflow：
 
-**Workflow A（`workflow1-incoming.json`）** — 接收 LINE/Telegram 訊息，觸發 GitHub Actions
+**Workflow A（`workflow1-incoming.json`）** — 接收 Telegram/LINE 訊息，觸發 GitHub Actions
 
-**Workflow B（`workflow2-outgoing.json`）** — 接收 GitHub 回傳，推播到 LINE / Telegram
+**Workflow B（`workflow2-outgoing.json`）** — 接收 GitHub 回傳，推播到 Telegram / LINE
 
-在 n8n 設定 credentials，各 Header Auth 的欄位值：
+在 n8n 設定 credentials：
 
 | Credential 名稱 | Header name | Header value |
 |---|---|---|
@@ -109,19 +119,74 @@ n8n → 推播回 Telegram / LINE
 | `LINE channel token` | `Authorization` | `Bearer <LINE channel access token>` |
 | `Brain Webhook Secret` | `X-Brain-Token` | `<你的 N8N_WEBHOOK_SECRET>` |
 
+> **Workflow B Webhook**：Webhook 節點 → Authentication → Header Auth，name `X-Brain-Token`，value = `N8N_WEBHOOK_SECRET`。
 > **必填 n8n 環境變數**（Railway：服務 → Variables tab）：
-> - `LINE_CHANNEL_SECRET` — 你的 LINE channel secret（必填；未設則所有 LINE 訊息被拒）
+> - `LINE_CHANNEL_SECRET` — 你的 LINE channel secret（使用 LINE 時必填；未設則所有 LINE 訊息被拒）
 > - `NODE_FUNCTION_ALLOW_BUILTIN=crypto` — 讓驗簽 Code node 能使用 crypto 模組
->
-> Workflow B：Webhook 節點 → Authentication → Header Auth，name `X-Brain-Token`，value = `N8N_WEBHOOK_SECRET`。
 
-> **注意**：本模板提供的 n8n workflow 為參考實作，請先在自己的 n8n 環境匯入並測試，確認正常運作後再存入真實家庭資料。
+> **注意**：本模板提供的 n8n workflow 為參考實作，請先在自己的 n8n 環境匯入並測試，確認正常運作後再上線。
 
 ### 6. 測試
 
 Telegram 測試：直接傳任一訊息給你的 bot。
 
 LINE 測試（若有設定）：在群組輸入 `@你的bot名稱 WiFi 密碼是什麼？`
+
+---
+
+## 擴充你的 Skills
+
+Starter template 涵蓋 wiki 查詢和 wiki 寫入。要加入自己的 skill：
+
+1. 把 skill 檔案加進 repo（Claude Code skills、prompt、或腳本）
+2. 在 `.github/workflows/agent.yml` 的 keyword routing 加入對應的觸發詞
+3. 更新 agent prompt，說明每個 skill 的功能
+
+可以擴充的資料夾結構範例：
+
+```text
+wiki/
+├── family/
+│   └── home.md
+├── finance/
+│   └── index.md
+└── health/
+    └── index.md
+skills/
+├── resume.md
+└── weekly-review.md
+```
+
+---
+
+## 費用估算
+
+| 項目 | 費用 |
+|------|------|
+| n8n（Railway 最低方案） | USD $5/月 |
+| Anthropic API（Haiku，按量計費） | USD $3–8/月（視用量） |
+| GitHub Actions | 免費（private repo 2,000 min/月） |
+| LINE Messaging API | 免費（月額度內） |
+| **合計** | **約 USD $8–13/月** |
+
+---
+
+## FAQ
+
+**Q: 回應好慢？**
+A: GitHub Actions cold start 約 30–60 秒，這是 scale-to-zero 的取捨。如果無法接受，考慮用 always-on 方案。
+
+**Q: 只想要 wiki 查詢，這樣會不會太殺雞用牛刀？**
+A: 是。如果只需要查詢知識庫、又不在意隱私，直接把 n8n 接 LLM API 就好。這個 template 的價值在於同時想遠端觸發 Claude Code skills。
+
+**Q: 我的資料會外流嗎？**
+A: Wiki 內容會被組進 prompt 傳送到 Anthropic API 處理。Anthropic 條款禁止用 API 輸入訓練模型，但資料確實會離開你的基礎設施。請避免在 wiki 裡放高敏感資訊（銀行帳密、身分證號、2FA codes）。
+
+**Q: 可以讓其他人使用嗎？**
+A: 可以。Telegram 使用者加到 `OWNER_TELEGRAM_USER_ID` 的判斷邏輯，LINE 使用者加進 `ALLOWED_LINE_USER_IDS`。
+
+**Q: 可以用 OpenAI 代替 Claude 嗎？**
+A: 可以，但需要修改 `.github/workflows/agent.yml` 裡的 CLI 指令與模型邏輯。
 
 ---
 
@@ -132,53 +197,7 @@ LINE 測試（若有設定）：在群組輸入 `@你的bot名稱 WiFi 密碼是
 - GitHub PAT 使用 fine-grained token，且只給必要的 repo 權限
 - GitHub、n8n、LINE、Telegram 帳號都開啟 2FA
 - 不要把銀行帳密、身分證號、2FA codes、完整金融憑證放進 `wiki/`
-- 匯入的 n8n workflows 先用測試資料跑通，再放入真實家庭資料
-
----
-
-## 擴充知識庫
-
-新增更多 wiki 資料夾：
-
-```text
-wiki/
-├── family/
-│   └── home.md
-├── finance/
-│   └── index.md
-└── health/
-    └── index.md
-```
-
-在 `agent.yml` 的 keyword routing 區段加入對應的關鍵字即可。
-
----
-
-## 費用估算
-
-| 項目 | 費用 |
-|------|------|
-| n8n（Railway 最低方案） | USD $5/月 |
-| Anthropic API（Haiku，按量計費） | USD $3–8/月（視用量） |
-| GitHub Actions | 免費（private repo 2000 min/月） |
-| LINE Messaging API | 免費（500則/月內） |
-| **合計** | **約 USD $8–13/月** |
-
----
-
-## FAQ
-
-**Q: 回應好慢？**  
-A: GitHub Actions cold start 約 30–60 秒。如果無法接受，考慮用 always-on 方案。
-
-**Q: 可以用 OpenAI 代替 Claude 嗎？**  
-A: 需要修改 `agent.yml` 裡的 CLI 指令。
-
-**Q: 家人說的話會被看到嗎？**  
-A: 你的 wiki 內容會被組進 prompt 傳送到 Anthropic API 處理。Anthropic API 條款禁止用 API 輸入訓練模型，但資料確實會離開你的基礎設施。請避免在 wiki 裡放高敏感資訊（密碼、身分證字號、金融帳戶），或在充分了解這個取捨後使用。
-
-**Q: 可以加更多家人嗎？**  
-A: 把他們的 LINE User ID 加進 `ALLOWED_LINE_USER_IDS` secret，並更新 n8n Workflow A 的白名單。
+- 匯入的 n8n workflows 先用測試資料跑通，再正式上線
 
 ---
 
