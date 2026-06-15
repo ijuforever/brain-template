@@ -1,7 +1,8 @@
-# My Brain — Remote Claude Code via LINE / Telegram
+# My Brain — Remote Claude Code via Telegram / LINE
 
-> A unified entry point to trigger any Claude Code Skill from LINE or Telegram — no computer needed.
-> Querying a private family wiki is the starter example. The real value is running any skill you have already built in Claude Code, straight from your phone.
+> A unified entry point to trigger any Claude Code Skill from your phone — no computer needed.
+> **Primary**: Telegram (personal remote control). **Optional**: LINE (family group queries).
+> Querying a private family wiki is the starter example. The real value is running any skill you have already built in Claude Code, straight from Telegram.
 > Estimated monthly cost: around USD $10 (n8n $5 + Anthropic API $5)
 > Chinese version: [README.zh.md](./README.zh.md)
 > Quickest setup: [GETTING_STARTED.md](./GETTING_STARTED.md) | 中文快速版: [GETTING_STARTED.zh.md](./GETTING_STARTED.zh.md)
@@ -11,31 +12,31 @@
 ## What is this?
 
 This template lets you:
-- **Trigger any Claude Code Skill remotely** from LINE or Telegram — update your resume, push to a repo, run a custom skill — without opening a laptop
-- Query your private wiki by tagging the bot in a LINE group (WiFi password, insurance info, schedules, and more)
+- **Trigger any Claude Code Skill remotely** via Telegram — update your resume, push to a repo, run a custom skill — without opening a laptop
+- Query your private wiki from Telegram or a LINE group (WiFi password, insurance info, schedules, and more)
 - Say "save to wiki ..." to auto-write knowledge and commit to GitHub
-- Use Telegram as a direct personal channel (more stable than LINE for solo use)
+- Add LINE as an optional channel for family group use
 
 **Highlights:**
 - Your GitHub repo is your brain: wiki, skills, and memory — all version-controlled
 - Scale-to-zero architecture — no idle cost beyond the n8n instance
 - Full git history for every knowledge edit
-- Dual platform support (LINE for family groups, Telegram for personal control)
+- Telegram as primary (simpler setup, no push limits); LINE as optional add-on for family groups
 
 ---
 
 ## Architecture
 
 ```text
-LINE Group / Telegram
-  ↓  Ask the bot
+Telegram (primary) / LINE group (optional)
+  ↓  Send command or question
 n8n (deployed on Railway)
   ↓  Trigger GitHub Actions
 GitHub Actions
-  ↓  Run Claude Code CLI and read wiki/
-Claude Code (Haiku for lower cost)
-  ↓  Return answer
-n8n → Push back to LINE/Telegram
+  ↓  Run Claude Code CLI — read wiki / execute skill
+Claude Code
+  ↓  Return result
+n8n → Push reply back to Telegram / LINE
 ```
 
 ---
@@ -72,7 +73,16 @@ Go to `Settings > Secrets and variables > Actions` and add:
 > LINE Developers Console -> your channel -> webhook settings.  
 > Send a message, then read `source.userId` from your n8n logs.
 
-### 4) Create a LINE Messaging API bot
+### 4) Set up your messaging bot
+
+**Telegram (primary — recommended)**
+
+1. Open Telegram and message [@BotFather](https://t.me/BotFather)
+2. Send `/newbot` and follow the prompts to get your **Bot Token**
+3. Send a message to your new bot, then use the Telegram API to find your **chat ID** (or send `/start` to [@userinfobot](https://t.me/userinfobot))
+4. Add the Bot Token as a credential in n8n (`Telegram account`)
+
+**LINE (optional — for family group use)**
 
 1. Go to [LINE Developers Console](https://developers.line.biz/)
 2. Create a Provider, then create a Messaging API channel
@@ -112,7 +122,9 @@ Set credentials in n8n. For each Header Auth credential, the exact values are:
 
 ### 6) Test
 
-LINE test: send `@your-bot-name What is our WiFi password?` in your group.
+Telegram test: send any message directly to your bot.
+
+LINE test (if configured): send `@your-bot-name What is our WiFi password?` in your group.
 
 ---
 
