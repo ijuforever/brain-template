@@ -104,9 +104,22 @@ n8n → LINE / Telegram 推播
 >
 > Workflow B：Webhook 節點 → Authentication → Header Auth，name `X-Brain-Token`，value = `N8N_WEBHOOK_SECRET`。
 
+> **注意**：本模板提供的 n8n workflow 為參考實作，請先在自己的 n8n 環境匯入並測試，確認正常運作後再存入真實家庭資料。
+
 ### 6. 測試
 
 LINE 測試：在群組輸入 `@你的bot名稱 WiFi 密碼是什麼？`
+
+---
+
+## 上線前檢查清單
+
+- GitHub repo 設為 private
+- n8n webhook 驗證已設定完成（`LINE_CHANNEL_SECRET` 與 `X-Brain-Token`）
+- GitHub PAT 使用 fine-grained token，且只給必要的 repo 權限
+- GitHub、n8n、LINE、Telegram 帳號都開啟 2FA
+- 不要把銀行帳密、身分證號、2FA codes、完整金融憑證放進 `wiki/`
+- 匯入的 n8n workflows 先用測試資料跑通，再放入真實家庭資料
 
 ---
 

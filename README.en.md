@@ -104,9 +104,22 @@ Set credentials in n8n. For each Header Auth credential, the exact values are:
 >
 > For Workflow B: Webhook node → Authentication → Header Auth, name `X-Brain-Token`, value = `N8N_WEBHOOK_SECRET`.
 
+> **Note**: This template includes reference n8n workflows. Please import and test them in your own n8n instance before using with real family data.
+
 ### 6) Test
 
 LINE test: send `@your-bot-name What is our WiFi password?` in your group.
+
+---
+
+## Before Going Live Checklist
+
+- Keep your GitHub repository private
+- Enable webhook verification in n8n (`LINE_CHANNEL_SECRET` and `X-Brain-Token`)
+- Use a fine-grained GitHub PAT with the smallest required repo scope
+- Enable 2FA on GitHub, n8n, LINE, and Telegram accounts
+- Do not store bank passwords, national ID numbers, 2FA codes, or complete financial credentials in `wiki/`
+- Test the imported n8n workflows with sample data before adding real family data
 
 ---
 
